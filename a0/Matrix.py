@@ -3,6 +3,7 @@ from ImageLoader import ImageLoader
 
 
 class Size:
+    """Representa as dimensões da matriz que armazena os dados da imagem"""
 
     def __init__(self, rows, cols):
         self.rows = rows
@@ -10,6 +11,7 @@ class Size:
 
 
 class Matrix:
+    """Classe que consegue armazenar uma imagem pgm/ppm/pbm e processá-la"""
 
     def __init__(self, rows = 0, cols = 0):
         self.__items = []

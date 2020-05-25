@@ -3,6 +3,7 @@ import re
 
 
 class ImageLoader:
+    """Carrega imagens pgm/ppm/pbm de acordo com sua extensão"""
 
     def __init__(self):
         pass

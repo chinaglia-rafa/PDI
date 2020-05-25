@@ -17,6 +17,7 @@ class ImageLoaderInterface(ABC):
 
 
 class PGMLoader(ImageLoaderInterface):
+    """Estratégia para carregar uma imagem PGM e retornar um dicionário com os dados"""
 
     def __init__(self):
         pass
