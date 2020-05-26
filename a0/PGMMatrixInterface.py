@@ -39,5 +39,9 @@ class PGMMatrixInterface(ABC):
         pass
 
     @abstractmethod
+    def black_and_white(self, matrix):
+        pass
+
+    @abstractmethod
     def invert(self, matrix):
         pass

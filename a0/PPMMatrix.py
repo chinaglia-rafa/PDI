@@ -152,6 +152,10 @@ class PPMMatrix():
 
         return True
 
+    def black_and_white(self, matrix):
+        print("HA! IT WAS NEVER IMPLEMENTED FOR COLORED PPM IMAGES! SURPRISE!!!!")
+        return False
+
     def from_template(self, matrix, data):
         """ Carrega a matrix com os dados do template """
         i = j = 0
