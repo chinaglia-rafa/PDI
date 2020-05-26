@@ -1,4 +1,4 @@
-from loaders import PGMLoader
+from loaders import PGMLoader, PPMLoader
 import re
 
 
@@ -23,12 +23,15 @@ class ImageLoader:
             matrix_template = loader.write(matrix, filename)
 
     def __find_strategy(self, filename):
+        filename = filename.lower()
         ext = re.findall("\.(\w+)$", filename)
         if not ext:
             raise NameError("Malformed Filename")
 
         if ext[0].lower() == "pgm":
             return PGMLoader()
+        elif ext[0].lower() == "ppm":
+            return PPMLoader()
 
         raise NameError("Format Unknown")
         return None

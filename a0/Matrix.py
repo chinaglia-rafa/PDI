@@ -1,11 +1,13 @@
 import random
 from ImageLoader import ImageLoader
+from PGMMatrix import PGMMatrix
+from PPMMatrix import PPMMatrix
 
 
 class Size:
     """Representa as dimensões da matriz que armazena os dados da imagem"""
 
-    def __init__(self, rows, cols):
+    def __init__(self, rows = 0, cols = 0):
         self.rows = rows
         self.cols = cols
 
@@ -13,38 +15,30 @@ class Size:
 class Matrix:
     """Classe que consegue armazenar uma imagem pgm/ppm/pbm e processá-la"""
 
-    def __init__(self, rows = 0, cols = 0):
+    def __init__(self, filename = ''):
         self.__items = []
-        self.__size = Size(rows, cols)
+        self.__size = Size()
         self.__limit = False
-        self.__format = ''
-        self.init()
+        self.__format = 'P2'
 
-    def init(self):
-        """ Inicializa um vetor de tamanho size x size com zeros """
+        # TODO: melhorar o valor-padrão
+        self.__strategy = PGMMatrix()
 
-        for i in range(self.__size.rows):
-            row = []
-            for j in range(self.__size.cols):
-                row.append(0)
-            self.__items.append(row)
-
-        return True
+        if filename != '':
+            self.load_from_file(filename)
+        else:
+            self.__strategy.init(self)
 
     def __str__(self):
-        if self.__size.rows == self.__size.cols == 0:
-            return "Matrix is empty! (0x0)"
-        s = "   Matrix is %d rows by %d cols\n\n" % (self.__size.rows, self.__size.cols)
-        for i in range(self.__size.rows):
-            for j in range(self.__size.cols):
-                s += " %3d" % self.__items[i][j]
-            s += "\n"
-
-        return s
+        return self.__strategy.str(self)
 
     def get_all(self):
         """ Retorna todo o vetor de itens """
         return self.__items
+
+    def set_all(self, value):
+        """ Seta o valor total para items """
+        self.__items = value
 
     def get_limit(self):
         return self.__limit
@@ -57,6 +51,11 @@ class Matrix:
 
     def set_format(self, value):
         self.__format = value
+        # Determina qual strategy será usada para processar a imagem
+        if value == 'P2':
+            self._set_strategy(PGMMatrix());
+        elif value == 'P3':
+            self._set_strategy(PPMMatrix());
 
     def get_item(self, i, j):
         #   Limita a range possível de acordo com o tamanho da matriz
@@ -67,135 +66,57 @@ class Matrix:
 
 
     def set_item(self, i, j, value, debug = False):
-        #   Limita a range possível de acordo com o tamanho da matriz
-        if debug:
-            print("Verbosing", i, j, "with value =", value, "having", self.__size.rows, self.__size.cols)
-        if 0 <= j < self.__size.cols and 0 <= i < self.__size.rows:
-            self.__items[i][j] = int(value)
-            return True
-
-        raise NameError("IndexOutOfRange")
-        return False
+        self.__strategy.set_item(self, i, j, value, debug)
 
     def get_size(self):
         return self.__size
 
+    def set_size(self, rows, cols):
+        """Altera as dimensões da imagem e reseta seus dados"""
+        self.__size.rows = rows
+        self.__size.cols = cols
+        self.__strategy.init(self)
+
+    def _set_strategy(self, strategy):
+        print("Setting image-processing strategy to", strategy)
+        self.__strategy = strategy
+
     def add(self, matrix):
-        if self.__size.rows != matrix.get_size().rows or self.__size.cols != matrix.get_size().cols:
-            print("Impossível adicionar: matrizes de tamanhos diferentes!")
-            return False
-
-        for i in range(self.__size.rows):
-            for j in range(self.__size.cols):
-                if self.get_item(i, j) + matrix.get_item(i, j) >= 100:
-                    self.set_item(i, j, 100)
-                else:
-                    self.set_item(i, j, self.get_item(i, j) + matrix.get_item(i, j))
-
-        return True
+        self.__strategy.add(self, matrix)
 
     def sub(self, matrix):
-        if self.__size.rows != matrix.get_size().rows or self.__size.cols != matrix.get_size().cols:
-            print("Impossível subtrair: matrizes de tamanhos diferentes!")
-            return False
-
-        for i in range(self.__size.rows):
-            for j in range(self.__size.cols):
-                if self.get_item(i, j) - matrix.get_item(i, j) <= 0:
-                    self.set_item(i, j, 0)
-                else:
-                    self.set_item(i, j, self.get_item(i, j) - matrix.get_item(i, j))
-
-        return True
+        self.__strategy.sub(self, matrix)
 
     def noise(self):
-        """ Preenche a matriz com valores aleatórios """
-        for i in range(self.__size.rows):
-            for j in range(self.__size.cols):
-                self.set_item(i, j, random.randint(0, 100))
+        self.__strategy.noise(self)
 
     def lighten(self, ammount):
-        """ Clareia a imagem de acordo com o valor de ammount """
-        has_image_loss = False
-        for i in range(self.__size.rows):
-            for j in range(self.__size.cols):
-                new_value_for_pixel = self.get_item(i, j) + ammount
-                if new_value_for_pixel > self.__limit:
-                    has_image_loss = True
-                    new_value_for_pixel = self.__limit
-
-                self.set_item(i, j, new_value_for_pixel)
-        if has_image_loss:
-            print("Possível perda de definição da imagem.")
+        self.__strategy.lighten(self, ammount)
 
     def darken(self, ammount):
-        """ Escurece a imagem de acordo com o valor de ammount """
-        has_image_loss = False
-        for i in range(self.__size.rows):
-            for j in range(self.__size.cols):
-                new_value_for_pixel = self.get_item(i, j) - ammount
-                if new_value_for_pixel < 0:
-                    has_image_loss = True
-                    new_value_for_pixel = 0
-
-                self.set_item(i, j, new_value_for_pixel)
-        if has_image_loss:
-            print("Possível perda de definição da imagem.")
+        self.__strategy.darken(self, ammount)
 
     def black_and_white(self):
-        """ Transforma a Imagem em Preto e Branco """
-        for i in range(self.__size.rows):
-            for j in range(self.__size.cols):
-                if self.get_item(i, j) < self.get_limit() // 2:
-                    new_value_for_pixel = 0
-                else:
-                    new_value_for_pixel = self.get_limit()
-
-                self.set_item(i, j, new_value_for_pixel)
-        self.set_limit(1)
-
-    def contrast(self, ammount):
-        """ Altera o contraste da imagem """
-        for i in range(self.__size.rows):
-            for j in range(self.__size.cols):
-                if self.get_item(i, j) < self.get_limit() // 2:
-                    if self.get_item(i, j) - ammount < 0:
-                        new_value_for_pixel = 0
-                    else:
-                        new_value_for_pixel = self.get_item(i, j) - ammount
-                else:
-                    if self.get_item(i, j) + ammount > self.get_limit():
-                        new_value_for_pixel = self.get_limit()
-                    else:
-                        new_value_for_pixel = self.get_item(i, j) + ammount
-
-
-                self.set_item(i, j, new_value_for_pixel)
+        self.__strategy.black_and_white(self)
 
     def invert(self):
-        """ Inverte as cores de imagem """
-        for i in range(self.__size.rows):
-            for j in range(self.__size.cols):
-                new_value_for_pixel = self.__limit - self.get_item(i, j)
-                if new_value_for_pixel < 0:
-                    new_value_for_pixel = self.__limit
-
-                self.set_item(i, j, new_value_for_pixel)
+        self.__strategy.invert(self)
 
     def rotate(self):
         """ Rotaciona a imagem 90 graus no sentido horário """
         # TODO: criar uma instância melhor de Matrix()
-        new_matrix = Matrix(self.__size.cols, self.__size.rows)
-        new_matrix.set_format(self.__format)
-        if self.__limit:
-            new_matrix.set_limit(self.__limit)
+        new_matrix = Matrix()
+        new_matrix.set_size(self.get_size().cols, self.get_size().rows)
+        new_matrix.set_format(self.get_format())
+        if self.get_limit():
+            new_matrix.set_limit(self.get_limit())
 
-        for i in range(self.__size.rows):
-            for j in range(self.__size.cols):
-                new_matrix.set_item(j, self.__size.rows - 1 - i, self.get_item(i, j))
+        for i in range(self.get_size().rows):
+            for j in range(self.get_size().cols):
+                new_matrix.set_item(j, self.get_size().rows - 1 - i, self.get_item(i, j))
 
-        self.__size.cols, self.__size.rows = new_matrix.get_size().cols, new_matrix.get_size().rows
-        self.__items = new_matrix.get_all()
+        self.set_size(new_matrix.get_size().rows, new_matrix.get_size().cols)
+        self.set_all(new_matrix.get_all())
 
     def load_from_file(self, filename):
         """ Carrega os dados de um arquivo usando o loader strategy designado """
@@ -221,18 +142,12 @@ class Matrix:
             }
         """
         self.set_format(matrix_template['format'])
+
         if matrix_template['limit']:
             self.set_limit(matrix_template['limit'])
         self.get_size().rows = int(matrix_template['height'])
         self.get_size().cols = int(matrix_template['width'])
 
-        i = j = 0
         # zera a situação da Matrix
-        self.init()
-        for element in matrix_template['data']:
-            self.set_item(i, j, element)
-            if j == self.get_size().cols - 1:
-                i += 1
-                j = 0
-            else:
-                j += 1
+        self.__strategy.init(self)
+        self.__strategy.from_template(self, matrix_template['data'])
