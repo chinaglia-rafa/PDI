@@ -130,6 +130,9 @@ class PGMMatrix(PGMMatrixInterface):
                     new_value_for_pixel = matrix.get_limit()
 
                 matrix.set_item(i, j, new_value_for_pixel)
+    def decompose(self, matrix):
+        """ PGM não possui a implementação de decomposição """
+        return False
 
     def from_template(self, matrix, data):
         """ Carrega a matrix com os dados do template """

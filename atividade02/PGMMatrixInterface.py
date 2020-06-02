@@ -45,3 +45,7 @@ class PGMMatrixInterface(ABC):
     @abstractmethod
     def invert(self, matrix):
         pass
+
+    @abstractmethod
+    def decompose(self, matrix, matrix_template):
+        pass

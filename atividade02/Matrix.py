@@ -16,6 +16,7 @@ class Matrix:
     """Classe que consegue armazenar uma imagem pgm/ppm/pbm e processá-la"""
 
     def __init__(self, filename = ''):
+        self.__filename = filename
         self.__items = []
         self.__size = Size()
         self.__limit = False
@@ -43,8 +44,14 @@ class Matrix:
     def get_limit(self):
         return self.__limit
 
+    def get_filename(self):
+        return self.__filename
+
     def set_limit(self, value):
         self.__limit = int(value)
+
+    def set_filename(self, value):
+        self.__filename = value
 
     def get_format(self):
         return self.__format
@@ -101,6 +108,14 @@ class Matrix:
 
     def invert(self):
         self.__strategy.invert(self)
+
+    def decompose(self):
+        #  O segundo parâmetro é o modelo de Matrix aque será usado para exportar
+        self.__strategy.decompose(self, Matrix())
+
+    def compose_from_pgm(self, m1, m2, m3):
+        if self.get_format() == 'P3':
+            self.__strategy.compose_from_pgm(self, m1, m2, m3)
 
     def rotate(self):
         """ Rotaciona a imagem 90 graus no sentido horário """
